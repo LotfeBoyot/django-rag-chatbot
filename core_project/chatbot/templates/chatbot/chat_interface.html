@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechNova AI Assistant</title>
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            height: 100vh;
+        }
+        .chat-container {
+            width: 100%;
+            max-width: 600px;
+            background-color: #2d2d2d;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        .chat-header {
+            padding: 20px;
+            background-color: #007bff;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        .chat-box {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .message {
+            padding: 10px 15px;
+            border-radius: 10px;
+            max-width: 80%;
+            line-height: 1.5;
+            position: relative;
+        }
+        .user-message {
+            background-color: #007bff;
+            align-self: flex-end; /* يمين */
+            border-bottom-left-radius: 0;
+        }
+        .bot-message {
+            background-color: #404040;
+            align-self: flex-start; /* شمال */
+            border-bottom-right-radius: 0;
+            white-space: pre-wrap; /* عشان يحافظ على التنسيق */
+        }
+        .input-area {
+            padding: 20px;
+            background-color: #2d2d2d;
+            border-top: 1px solid #404040;
+            display: flex;
+            gap: 10px;
+        }
+        input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #404040;
+            background-color: #1a1a1a;
+            color: #fff;
+            outline: none;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .loading {
+            font-style: italic;
+            color: #888;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="chat-header">
+        🤖 TechNova Assistant
+    </div>
+    
+    <div class="chat-box" id="chatBox">
+        <div class="message bot-message">
+            أهلاً يا أحمد! 👋 أنا المساعد الذكي لشركة TechNova. اسألني عن أي حاجة في دليل الموظفين.
+        </div>
+    </div>
+
+    <div class="input-area">
+        <input type="text" id="userInput" placeholder="اكتب سؤالك هنا..." onkeypress="handleEnter(event)">
+        <button onclick="sendMessage()">إرسال</button>
+    </div>
+</div>
+
+<script>
+    async function sendMessage() {
+        const inputField = document.getElementById('userInput');
+        const chatBox = document.getElementById('chatBox');
+        const message = inputField.value.trim();
+
+        if (!message) return;
+
+        // 1. اعرض رسالة اليوزر فوراً
+        appendMessage(message, 'user-message');
+        inputField.value = '';
+
+        // 2. اعرض علامة التحميل
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'message bot-message loading';
+        loadingDiv.innerText = 'جاري البحث...';
+        loadingDiv.id = 'loadingMsg';
+        chatBox.appendChild(loadingDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        try {
+            // 3. ابعت للـ API اللي إحنا عملناه
+            const response = await fetch('/api/chat/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: message })
+            });
+
+            const data = await response.json();
+
+            // 4. شيل علامة التحميل واعرض الرد
+            document.getElementById('loadingMsg').remove();
+            
+            // تنظيف الرد من رسالة الخطأ لو موجودة عشان يبقى شكله حلو
+            let cleanResponse = data.response;
+            if (cleanResponse.includes("Insufficient Balance")) {
+                cleanResponse = cleanResponse.split("💡")[1] || cleanResponse;
+                cleanResponse = "💡" + cleanResponse; // نرجع علامة اللمبة
+            }
+
+            appendMessage(cleanResponse, 'bot-message');
+
+        } catch (error) {
+            document.getElementById('loadingMsg').remove();
+            appendMessage('حصل خطأ في الاتصال بالسيرفر.', 'bot-message');
+        }
+    }
+
+    function appendMessage(text, className) {
+        const chatBox = document.getElementById('chatBox');
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${className}`;
+        msgDiv.innerText = text;
+        chatBox.appendChild(msgDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function handleEnter(e) {
+        if (e.key === 'Enter') sendMessage();
+    }
+</script>
+
+</body>
+</html>

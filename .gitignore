@@ -1,0 +1,14 @@
+# 1. Ignore Virtual Environment
+venv/
+env/
+.env
+
+# 2. Ignore Database (Local)
+db.sqlite3
+
+# 3. Ignore Python Cache files
+__pycache__/
+*.pyc
+
+# 4. Ignore OS files
+.DS_Store
